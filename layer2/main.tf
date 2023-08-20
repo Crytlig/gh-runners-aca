@@ -30,6 +30,18 @@ resource "azurerm_container_app_environment" "cae" {
   tags                = local.default_tags
 }
 
+resource "azapi_resource" "ca" {
+  name     = "${local.stack}-ca"
+  location = data.azurerm_resource_group.rg.location
+  id       = azurerm_container_app_environment.cae.id
+  type     = "Microsoft.App/containerApps@2023-05-01"
+  tags     = local.default_tags
+  body = jsondecode(
+    
+  )
+
+
+}
 resource "azurerm_container_app" "ca" {
   name                         = "${local.stack}-ca"
   container_app_environment_id = azurerm_container_app_environment.cae.id
@@ -53,18 +65,32 @@ resource "azurerm_container_app" "ca" {
       image  = "${data.azurerm_container_registry.acr.login_server}/${var.container_image}:${var.container_tag}"
       cpu    = 0.25
       memory = "0.5Gi"
-      # env {
-      # blabla = ""
-      # }
 
+      env {
+        name  = "GH_OWNER"
+        value = var.github_org
+      }
+      env {
+        name  = "GH_REPOSITORY"
+        value = var.github_repo
+      }
+      env {
+        secret_name = "token"
+        name        = "GH_TOKEN"
+      }
     }
     # https://techcommunity.microsoft.com/t5/fasttrack-for-azure/can-i-create-an-azure-container-apps-in-terraform-yes-you-can/ba-p/3570694
     # dynamic "" {
     #
     # }
-    min_replicas = 0
+    min_replicas = 1
+    max_replicas = 2
   }
 
+  secret {
+    name  = "token"
+    value = var.github_token
+  }
   tags = local.default_tags
 }
 
