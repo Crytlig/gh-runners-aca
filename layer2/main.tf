@@ -86,7 +86,7 @@ resource "azapi_resource" "ca" {
         ]
         scale = {
         minReplicas = 1,
-        maxReplicas = 5,
+        maxReplicas = 20,
         rules = [
           {
             custom = {
