@@ -33,64 +33,87 @@ resource "azurerm_container_app_environment" "cae" {
 resource "azapi_resource" "ca" {
   name     = "${local.stack}-ca"
   location = data.azurerm_resource_group.rg.location
-  id       = azurerm_container_app_environment.cae.id
-  type     = "Microsoft.App/containerApps@2023-05-01"
+  parent_id = data.azurerm_resource_group.rg.id
+  type     = "Microsoft.App/containerApps@2023-04-01-preview"
   tags     = local.default_tags
-  body = jsondecode(
-    
-  )
-
-
-}
-resource "azurerm_container_app" "ca" {
-  name                         = "${local.stack}-ca"
-  container_app_environment_id = azurerm_container_app_environment.cae.id
-  resource_group_name          = data.azurerm_resource_group.rg.name
-  revision_mode                = "Single"
 
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.mi.id]
   }
 
-
-  registry {
-    server   = data.azurerm_container_registry.acr.login_server
-    identity = azurerm_user_assigned_identity.mi.id
-  }
-
-  template {
-    container {
-      name   = "ca"
-      image  = "${data.azurerm_container_registry.acr.login_server}/${var.container_image}:${var.container_tag}"
-      cpu    = 0.25
-      memory = "0.5Gi"
-
-      env {
-        name  = "GH_OWNER"
-        value = var.github_org
+  body = jsonencode({
+    properties = {
+      managedEnvironmentId = azurerm_container_app_environment.cae.id
+      configuration = {
+        secrets = [
+          {
+            name = "token"
+            value = var.github_token
+          }
+        ]
+        registries = [
+          {
+            server = data.azurerm_container_registry.acr.login_server,
+            identity = azurerm_user_assigned_identity.mi.id
+          }
+        ]
       }
-      env {
-        name  = "GH_REPOSITORY"
-        value = var.github_repo
-      }
-      env {
-        secret_name = "token"
-        name        = "GH_TOKEN"
+      template = {
+        containers = [
+          {
+            image = "${data.azurerm_container_registry.acr.login_server}/${var.container_image}:${var.container_tag}",
+            name  = "ca"
+            resources = {
+              cpu    = 0.25
+              memory = "0.5Gi"
+            },
+            env = [
+              {
+                name = "GH_OWNER"
+                value = var.github_org
+              },
+              {
+                name = "GH_REPOSITORY"
+                value = var.github_repo
+              },
+              {
+                secretRef = "token"
+                name = "GH_TOKEN"
+              },
+            ]
+          }
+        ]
+        scale = {
+        minReplicas = 1,
+        maxReplicas = 5,
+        rules = [
+          {
+            custom = {
+              auth = [
+                {
+                  secretRef = "token",
+                  triggerParameter = "authenticationRef"
+                }
+              ],
+              metadata = {
+                labels = "self-hosted",
+                owner = var.github_org,
+                repos = var.github_repo,
+                runnerScope = "repo",
+                targetWorkflowQueueLength = "3"
+              },
+              type = "github-runner"
+            },
+            name = "github"
+          }
+        ]
+      },
       }
     }
-    # https://techcommunity.microsoft.com/t5/fasttrack-for-azure/can-i-create-an-azure-container-apps-in-terraform-yes-you-can/ba-p/3570694
-    # dynamic "" {
-    #
-    # }
-    min_replicas = 1
-    max_replicas = 2
-  }
-
-  secret {
-    name  = "token"
-    value = var.github_token
-  }
-  tags = local.default_tags
+  })
+  ignore_missing_property = true
+  depends_on = [
+    azurerm_container_app_environment.cae
+  ]
 }
-
