@@ -93,7 +93,7 @@ resource "azapi_resource" "ca" {
               auth = [
                 {
                   secretRef = "token",
-                  triggerParameter = "authenticationRef"
+                  triggerParameter = "personalAccessToken"
                 }
               ],
               metadata = {
@@ -101,7 +101,7 @@ resource "azapi_resource" "ca" {
                 owner = var.github_org,
                 repos = var.github_repo,
                 runnerScope = "repo",
-                targetWorkflowQueueLength = "20"
+                targetWorkflowQueueLength = "1"
               },
               type = "github-runner"
             },
