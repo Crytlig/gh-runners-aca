@@ -101,7 +101,7 @@ resource "azapi_resource" "ca" {
                 owner = var.github_org,
                 repos = var.github_repo,
                 runnerScope = "repo",
-                targetWorkflowQueueLength = "3"
+                targetWorkflowQueueLength = "20"
               },
               type = "github-runner"
             },
