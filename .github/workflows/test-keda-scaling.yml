@@ -1,0 +1,34 @@
+name: keda-scaling
+
+on:
+  workflow_dispatch: 
+  
+
+jobs:
+  scale-one:
+    runs-on: self-hosted
+    steps:
+      - name: sleep
+        run: |
+          echo "hello"
+          sleep 15
+          echo "slept for 15 sec"
+
+  scale-two:
+    runs-on: self-hosted
+    steps:
+      - name: sleep
+        run: |
+          echo "hello"
+          sleep 15
+          echo "slept for 15 sec"
+
+  scale-three:
+    runs-on: self-hosted
+    steps:
+      - name: sleep
+        run: |
+          echo "hello"
+          sleep 15
+          echo "slept for 15 sec"
+
