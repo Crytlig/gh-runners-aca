@@ -17,3 +17,9 @@ The Dockerfile can be built and tested locally before deploying any of the Terra
 You can, though, deploy the layer1, use the makefile to build and push the Dockerfile and then deploy layer2.
 
 I am too lazy to continue working on the makefile to make it a one-click option as the PoC is working as intended.
+
+
+## Note on AzAPI
+
+Currently, the container app is deployed using the AzAPI as the current AzureRM provider
+in Terraform does not support scaling rules for container apps.
